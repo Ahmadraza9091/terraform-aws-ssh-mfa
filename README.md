@@ -608,4 +608,184 @@ The `.gitignore` file protects these files from accidental commits.
 
 The Google Authenticator secret is user-specific.
 
-It should not be h
+It should not be hard-coded into:
+
+```text
+main.tf
+user_data.sh
+README.md
+GitHub
+Terraform variables
+```
+
+Instead, the server is configured for Google Authenticator and the user performs a secure enrollment:
+
+```bash
+google-authenticator
+```
+
+This keeps the TOTP secret outside the source code.
+
+---
+
+# Useful Terraform Commands
+
+Initialize:
+
+```bash
+terraform init
+```
+
+Format:
+
+```bash
+terraform fmt
+```
+
+Validate:
+
+```bash
+terraform validate
+```
+
+Preview changes:
+
+```bash
+terraform plan
+```
+
+Apply infrastructure:
+
+```bash
+terraform apply
+```
+
+Show current state:
+
+```bash
+terraform show
+```
+
+List resources:
+
+```bash
+terraform state list
+```
+
+Destroy infrastructure:
+
+```bash
+terraform destroy
+```
+
+---
+
+# Troubleshooting
+
+## SSH asks for a password
+
+Check:
+
+```bash
+sudo sshd -T | grep -E 'passwordauthentication|kbdinteractiveauthentication|usepam'
+```
+
+Expected:
+
+```text
+passwordauthentication no
+kbdinteractiveauthentication yes
+usepam yes
+```
+
+Check PAM:
+
+```bash
+sudo cat /etc/pam.d/sshd
+```
+
+Validate SSH:
+
+```bash
+sudo sshd -t
+```
+
+---
+
+## SSH MFA is not working
+
+Check that the user has enrolled Google Authenticator:
+
+```bash
+ls -la ~/.google_authenticator
+```
+
+If it does not exist:
+
+```bash
+google-authenticator
+```
+
+---
+
+## Terraform cannot find the S3 backend
+
+Make sure the S3 bucket exists:
+
+```bash
+aws s3 ls s3://terraform-state-bucket-ahmad-2026/
+```
+
+If this is the first deployment, temporarily disable `backend.tf` and bootstrap the bucket before migrating the state.
+
+---
+
+## Terraform wants to recreate the EC2 instance
+
+Run:
+
+```bash
+terraform plan
+```
+
+Review the proposed changes carefully before running:
+
+```bash
+terraform apply
+```
+
+Do not blindly approve a plan that proposes destroying or replacing infrastructure you still need.
+
+---
+
+# Technologies Used
+
+* **Terraform**
+* **AWS EC2**
+* **AWS VPC**
+* **AWS S3**
+* **Ubuntu Linux**
+* **OpenSSH**
+* **PAM**
+* **Google Authenticator**
+* **Git**
+* **GitHub**
+
+---
+
+# Project Goal
+
+This project demonstrates how Infrastructure as Code can be used to deploy an AWS EC2 server and automatically configure stronger SSH authentication using:
+
+```text
+Terraform
+    │
+    ├── AWS Infrastructure
+    │
+    ├── S3 Remote State
+    │
+    └── EC2 User Data
+             │
+             ├── SSH Key Authentication
+             └── Google Authenticator MFA
+```
